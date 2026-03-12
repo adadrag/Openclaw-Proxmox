@@ -13,14 +13,38 @@ A single Bash script that runs on your **Proxmox host** and:
 5. Configures systemd services for everything (auto-start on boot)
 6. Prints connection URLs when done
 
-## Quick Start
+## Installation & Usage
+
+### Option 1: One-liner (download and run)
 
 ```bash
-# On your Proxmox host:
-wget -O setup-openclaw-lxc.sh https://raw.githubusercontent.com/adadrag/Openclaw-Proxmox/main/setup-openclaw-lxc.sh
-chmod +x setup-openclaw-lxc.sh
-bash setup-openclaw-lxc.sh
+# SSH into your Proxmox host, then:
+bash <(curl -fsSL https://raw.githubusercontent.com/adadrag/Openclaw-Proxmox/main/setup-openclaw-lxc.sh)
 ```
+
+### Option 2: Download first, then run
+
+```bash
+# Download the script
+wget -O setup-openclaw-lxc.sh https://raw.githubusercontent.com/adadrag/Openclaw-Proxmox/main/setup-openclaw-lxc.sh
+
+# Make it executable
+chmod +x setup-openclaw-lxc.sh
+
+# Run it
+./setup-openclaw-lxc.sh
+```
+
+### Option 3: Clone the repo
+
+```bash
+git clone https://github.com/adadrag/Openclaw-Proxmox.git
+cd Openclaw-Proxmox
+chmod +x setup-openclaw-lxc.sh
+./setup-openclaw-lxc.sh
+```
+
+The script will interactively prompt you for a container password and optional settings (disk size, memory, cores, VNC resolution), then handle everything else automatically.
 
 ## Requirements
 

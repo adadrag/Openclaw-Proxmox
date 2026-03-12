@@ -80,11 +80,20 @@ The script creates and enables three systemd services inside the container:
 | `vncserver` | 5901 | TigerVNC server (localhost only) |
 | `novnc` | 6080 | noVNC web proxy (exposes VNC via browser) |
 
+## Desktop Shortcuts
+
+The script places two shortcuts on the XFCE desktop (visible via noVNC):
+
+| Icon | Name | What it does |
+|------|------|-------------|
+| **OpenClaw Setup Wizard** | `openclaw-onboard.desktop` | Opens a terminal running `openclaw onboard` — the interactive onboarding wizard to configure your gateway, workspace, channels, and skills |
+| **OpenClaw Dashboard** | `openclaw-dashboard.desktop` | Opens Chromium with the dashboard URL and auth token pre-filled (`http://127.0.0.1:18789/#token=<your-token>`) — no manual token entry needed |
+
 ## Access Points
 
 After setup, the script prints all connection details:
 
-- **OpenClaw Dashboard**: `http://<container-ip>:18789/`
+- **OpenClaw Dashboard**: `http://<container-ip>:18789/#token=<your-token>` (auto-authenticated)
 - **Remote Desktop (noVNC)**: `http://<container-ip>:6080/vnc.html`
 - **SSH**: `ssh root@<container-ip>`
 

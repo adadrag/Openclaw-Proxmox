@@ -200,18 +200,18 @@ ok "OpenClaw configured (token: $AUTH_TOKEN)."
 # ─── Configure VNC ───────────────────────────────────────────────────────────
 info "Configuring VNC..."
 ct_exec "
-    mkdir -p /root/.vnc
-    echo '${CT_PASSWORD}' | vncpasswd -f > /root/.vnc/passwd
-    chmod 600 /root/.vnc/passwd
+    mkdir -p /root/.config/tigervnc
+    echo '${CT_PASSWORD}' | vncpasswd -f > /root/.config/tigervnc/passwd
+    chmod 600 /root/.config/tigervnc/passwd
 "
 
-ct_exec "cat > /root/.vnc/xstartup << 'XSTARTUP'
+ct_exec "cat > /root/.config/tigervnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 exec startxfce4
 XSTARTUP
-chmod +x /root/.vnc/xstartup"
+chmod +x /root/.config/tigervnc/xstartup"
 ok "VNC configured."
 
 # ─── Fix Chromium for LXC (--no-sandbox) ─────────────────────────────────────
@@ -258,6 +258,7 @@ After=network.target
 
 [Service]
 Type=forking
+Environment=HOME=/root
 ExecStartPre=/bin/sh -c \"/usr/bin/vncserver -kill :1 > /dev/null 2>&1 || :\"
 ExecStart=/usr/bin/vncserver :1 -geometry ${VNC_RES} -depth 24 -localhost yes
 ExecStop=/usr/bin/vncserver -kill :1

@@ -275,6 +275,12 @@ StartupNotify=true
 SHORTCUT
 chmod +x /root/Desktop/openclaw-dashboard.desktop"
 
+# Mark all desktop shortcuts as trusted (suppresses XFCE "Untrusted application" warning)
+ct_exec "
+    for f in /root/Desktop/*.desktop; do
+        gio set \"\$f\" metadata::xfce-exe-checksum \"\$(sha256sum \"\$f\" | cut -d' ' -f1)\"
+    done
+"
 ok "Desktop shortcuts created."
 
 # ─── Create systemd services ─────────────────────────────────────────────────

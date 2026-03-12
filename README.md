@@ -1,42 +1,38 @@
-# OpenClaw Proxmox LXC Setup
+# OpenClaw on Proxmox — One Script, Full AI Assistant
 
-Automated setup script that deploys an [OpenClaw](https://openclaw.ai/) AI assistant inside a Proxmox LXC container, complete with a remote desktop (noVNC) and Chromium browser.
+Deploy your own **[OpenClaw](https://openclaw.ai/) AI assistant** on any Proxmox server in minutes. One command, zero manual setup.
 
-## What it does
+## Why use this?
 
-A single Bash script that runs on your **Proxmox host** and:
+- **Self-hosted AI assistant** — OpenClaw runs entirely on your hardware, under your control
+- **One command to deploy** — no manual package installation, no config file editing, no guesswork
+- **Full remote desktop** — access a graphical XFCE desktop from any browser via noVNC
+- **Ready-to-use browser** — Chromium pre-configured and set as default, works out of the box in LXC
+- **Lightweight container** — runs in an unprivileged LXC (not a full VM), so it's fast and resource-efficient
+- **Auto-starts on boot** — all services (gateway, VNC, noVNC) are systemd-managed
+- **Onboarding made easy** — desktop shortcut walks you through OpenClaw setup step by step
+- **Homebrew included** — install OpenClaw skills right away
 
-1. Creates a Debian 13 unprivileged LXC container
-2. Installs Node.js 22 and OpenClaw
-3. Installs XFCE4 desktop with TigerVNC and noVNC
-4. Installs Chromium (patched for LXC `--no-sandbox`)
-5. Configures systemd services for everything (auto-start on boot)
-6. Prints connection URLs when done
+## Quick Start
 
-## Installation & Usage
-
-### Option 1: One-liner (download and run)
+SSH into your Proxmox host and run:
 
 ```bash
-# SSH into your Proxmox host, then:
 bash <(curl -fsSL https://raw.githubusercontent.com/adadrag/Openclaw-Proxmox/main/setup-openclaw-lxc.sh)
 ```
 
-### Option 2: Download first, then run
+That's it. The script will ask for a password, pick sensible defaults for everything else, and print your connection URLs when done.
 
+### Alternative install methods
+
+**Download first, then run:**
 ```bash
-# Download the script
 wget -O setup-openclaw-lxc.sh https://raw.githubusercontent.com/adadrag/Openclaw-Proxmox/main/setup-openclaw-lxc.sh
-
-# Make it executable
 chmod +x setup-openclaw-lxc.sh
-
-# Run it
 ./setup-openclaw-lxc.sh
 ```
 
-### Option 3: Clone the repo
-
+**Clone the repo:**
 ```bash
 git clone https://github.com/adadrag/Openclaw-Proxmox.git
 cd Openclaw-Proxmox
@@ -44,58 +40,58 @@ chmod +x setup-openclaw-lxc.sh
 ./setup-openclaw-lxc.sh
 ```
 
-The script will interactively prompt you for a container password and optional settings (disk size, memory, cores, VNC resolution), then handle everything else automatically.
+## What you get
+
+After the script finishes, you'll have a fully configured LXC container with:
+
+| What | How to access |
+|------|---------------|
+| **OpenClaw Dashboard** | `http://<container-ip>:18789/#token=<your-token>` |
+| **Remote Desktop** | `http://<container-ip>:6080/vnc.html` |
+| **SSH** | `ssh root@<container-ip>` |
+
+The script prints all of this (including the token) at the end.
+
+## Desktop Shortcuts
+
+Once you open the remote desktop via noVNC, you'll find two shortcuts ready to go:
+
+| Shortcut | What it does |
+|----------|-------------|
+| **OpenClaw Setup Wizard** | Opens the interactive onboarding wizard (`openclaw onboard`) to configure your channels, workspace, and skills |
+| **OpenClaw Dashboard** | Opens Chromium with the dashboard URL and auth token pre-filled — no manual token entry needed |
 
 ## Requirements
 
 - Proxmox VE 8.x+
 - Root access on the Proxmox host
 - Internet connectivity (for downloading packages)
-- Available storage for container rootfs
 
-## Configuration Options
+## Configuration
 
-The script prompts for the following (with defaults):
+The script prompts you interactively (all optional except password):
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | Password | *(required)* | Container root password (also used for VNC) |
 | Disk size | 32 GB | Container root filesystem size |
-| Memory | 4096 MB | Container RAM allocation |
+| Memory | 4096 MB | RAM allocation |
 | CPU cores | 4 | Number of CPU cores |
 | VNC resolution | 1920x1080 | Remote desktop resolution |
 
-Everything else is auto-detected:
-- **VMID** — next available ID in the cluster
-- **Storage** — auto-selects template and rootfs storage
-- **Networking** — DHCP on `vmbr0`
+Everything else is auto-detected — VMID, storage, networking (DHCP).
 
-## Services
+## What the script installs
 
-The script creates and enables three systemd services inside the container:
+All inside the container (nothing is installed on the Proxmox host):
 
-| Service | Port | Description |
-|---------|------|-------------|
-| `openclaw-gateway` | 18789 | OpenClaw AI gateway (token auth) |
-| `vncserver` | 5901 | TigerVNC server (localhost only) |
-| `novnc` | 6080 | noVNC web proxy (exposes VNC via browser) |
-
-## Desktop Shortcuts
-
-The script places two shortcuts on the XFCE desktop (visible via noVNC):
-
-| Icon | Name | What it does |
-|------|------|-------------|
-| **OpenClaw Setup Wizard** | `openclaw-onboard.desktop` | Opens a terminal running `openclaw onboard` — the interactive onboarding wizard to configure your gateway, workspace, channels, and skills |
-| **OpenClaw Dashboard** | `openclaw-dashboard.desktop` | Opens Chromium with the dashboard URL and auth token pre-filled (`http://127.0.0.1:18789/#token=<your-token>`) — no manual token entry needed |
-
-## Access Points
-
-After setup, the script prints all connection details:
-
-- **OpenClaw Dashboard**: `http://<container-ip>:18789/#token=<your-token>` (auto-authenticated)
-- **Remote Desktop (noVNC)**: `http://<container-ip>:6080/vnc.html`
-- **SSH**: `ssh root@<container-ip>`
+- **Debian 13** LXC (unprivileged, nesting enabled)
+- **Node.js 22** + **OpenClaw**
+- **Homebrew** (for OpenClaw skills)
+- **XFCE4** desktop + **TigerVNC** + **noVNC**
+- **Chromium** (patched for LXC, set as default browser)
+- **Noto Color Emoji** font (for proper terminal rendering)
+- Three **systemd services**: `openclaw-gateway`, `vncserver`, `novnc`
 
 ## Container Management
 
@@ -116,13 +112,12 @@ pct exec <VMID> -- systemctl status novnc
 ```
 
 **Chromium won't launch?**
-Chromium needs `--no-sandbox` inside LXC containers. The script patches this automatically, but if you installed Chromium separately, run:
+The script patches this automatically. If you installed Chromium separately:
 ```bash
 sed -i 's|Exec=/usr/bin/chromium|Exec=/usr/bin/chromium --no-sandbox|g' /usr/share/applications/chromium.desktop
 ```
 
 **"Unable to contact settings server" in XFCE?**
-This means `dbus-x11` is missing. The script installs it, but if you see this error:
 ```bash
 apt-get install -y dbus-x11
 ```

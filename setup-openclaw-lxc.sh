@@ -162,26 +162,37 @@ ok "Container IP: ${CT_IP:-unknown}"
 info "Updating packages and installing prerequisites..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update && apt-get upgrade -y
-    apt-get install -y curl ca-certificates gnupg git
+
+    # Fix locale warnings
+    apt-get update && apt-get install -y locales 2>&1 | grep -v 'Failed to write'
+    sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+    locale-gen en_US.UTF-8 >/dev/null 2>&1
+    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+    apt-get upgrade -y 2>&1 | grep -v 'Failed to write'
+    apt-get install -y curl ca-certificates gnupg git 2>&1 | grep -v 'Failed to write'
 "
 ok "Prerequisites installed."
 
 info "Installing Node.js 22..."
 ct_exec "
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-    apt-get install -y nodejs
+    export DEBIAN_FRONTEND=noninteractive
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - 2>&1 | tail -3
+    apt-get install -y nodejs 2>&1 | grep -v 'Failed to write'
 "
 ok "Node.js installed."
 
 info "Installing OpenClaw..."
-ct_exec "npm install -g openclaw@latest"
+ct_exec "npm install -g openclaw@latest 2>&1 | tail -5"
 ok "OpenClaw installed."
 
-info "Installing XFCE4, TigerVNC, noVNC, Chromium, dbus-x11..."
+info "Installing XFCE4, TigerVNC, noVNC, Chromium, dbus-x11 (this takes a few minutes)..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
-    apt-get install -y xfce4 xfce4-terminal tigervnc-standalone-server novnc websockify chromium dbus-x11
+    export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+    apt-get install -y xfce4 xfce4-terminal tigervnc-standalone-server novnc websockify chromium dbus-x11 2>&1 \
+        | grep -v -E 'Failed to write|Failed to send reload|Permission denied|Cannot set LC_'
 "
 ok "Desktop environment installed."
 

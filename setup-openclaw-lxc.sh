@@ -304,8 +304,40 @@ WRAPPER
 "
 ok "Google Chrome configured."
 
+# ─── Configure LXQt default terminal ─────────────────────────────────────────
+info "Setting xterm as default terminal..."
+ct_exec "
+    mkdir -p /root/.config/lxqt
+    cat > /root/.config/lxqt/session.conf << 'CONF'
+[General]
+__userfile__=true
+
+[Environment]
+TERM=xterm-256color
+
+[Preferred Applications]
+terminal_emulator=xterm -fa Monospace -fs 12
+CONF
+"
+ok "Default terminal configured."
+
 # ─── Create desktop shortcuts ────────────────────────────────────────────────
 info "Creating desktop shortcuts..."
+
+# Terminal shortcut
+ct_exec "cat > /root/Desktop/xterm.desktop << 'SHORTCUT'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Terminal
+Comment=Open a terminal
+Exec=xterm -fa Monospace -fs 12
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupNotify=true
+SHORTCUT
+chmod +x /root/Desktop/xterm.desktop"
 
 # OpenClaw Onboarding wizard (runs in terminal)
 ct_exec "cat > /root/Desktop/openclaw-onboard.desktop << 'SHORTCUT'

@@ -208,7 +208,7 @@ info "Installing LXQt, TigerVNC, noVNC (this takes a few minutes)..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
     export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-    apt-get install -y lxqt openbox qterminal tigervnc-standalone-server novnc websockify fonts-noto-color-emoji 2>&1 \
+    apt-get install -y lxqt openbox qterminal tigervnc-standalone-server novnc websockify dbus-x11 fonts-noto-color-emoji 2>&1 \
         | grep -v -E 'Failed to write|Failed to send reload|Permission denied|Cannot set LC_'
 "
 ok "Desktop environment installed."
@@ -250,7 +250,7 @@ ct_exec "cat > /root/.config/tigervnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-exec startlxqt
+exec dbus-launch --exit-with-session startlxqt
 XSTARTUP
 chmod +x /root/.config/tigervnc/xstartup"
 

@@ -3,7 +3,7 @@
 # setup-openclaw-lxc.sh — Automated OpenClaw AI assistant setup in a Proxmox LXC container
 #
 # Run this script directly on the Proxmox host.
-# It creates a Debian 13 LXC, installs OpenClaw + XFCE desktop + VNC/noVNC,
+# It creates a Debian 13 LXC, installs OpenClaw + LXQt desktop + Google Chrome + VNC/noVNC,
 # and prints connection info when done.
 #
 
@@ -127,8 +127,7 @@ pct create "$VMID" "${TMPL_STORAGE}:vztmpl/${TEMPLATE}" \
     --memory "$MEMORY" \
     --cores "$CORES" \
     --net0 name=eth0,bridge=vmbr0,ip=dhcp \
-    --unprivileged 1 \
-    --features nesting=1 \
+    --unprivileged 0 \
     --start 0
 ok "Container $VMID created."
 
@@ -205,14 +204,23 @@ info "Installing OpenClaw..."
 ct_exec "npm install -g openclaw@latest 2>&1 | tail -5"
 ok "OpenClaw installed."
 
-info "Installing XFCE4, TigerVNC, noVNC, Chromium, dbus-x11 (this takes a few minutes)..."
+info "Installing LXQt, TigerVNC, noVNC (this takes a few minutes)..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
     export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-    apt-get install -y xfce4 xfce4-terminal tigervnc-standalone-server novnc websockify chromium dbus-x11 fonts-noto-color-emoji 2>&1 \
+    apt-get install -y lxqt openbox qterminal tigervnc-standalone-server novnc websockify fonts-noto-color-emoji 2>&1 \
         | grep -v -E 'Failed to write|Failed to send reload|Permission denied|Cannot set LC_'
 "
 ok "Desktop environment installed."
+
+info "Installing Google Chrome..."
+ct_exec "
+    export DEBIAN_FRONTEND=noninteractive
+    curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb
+    apt-get install -y /tmp/chrome.deb 2>&1 | grep -v -E 'Failed to write|Permission denied'
+    rm -f /tmp/chrome.deb
+"
+ok "Google Chrome installed."
 
 # ─── Configure OpenClaw ──────────────────────────────────────────────────────
 info "Configuring OpenClaw..."
@@ -226,6 +234,10 @@ ct_exec "
 "
 ok "OpenClaw configured (token: $AUTH_TOKEN)."
 
+info "Installing OpenClaw browser extension..."
+ct_exec "openclaw browser extension install 2>&1 | tail -5 || true"
+ok "OpenClaw browser extension installed."
+
 # ─── Configure VNC ───────────────────────────────────────────────────────────
 info "Configuring VNC..."
 ct_exec "
@@ -238,7 +250,7 @@ ct_exec "cat > /root/.config/tigervnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-exec startxfce4
+exec startlxqt
 XSTARTUP
 chmod +x /root/.config/tigervnc/xstartup"
 
@@ -246,46 +258,19 @@ chmod +x /root/.config/tigervnc/xstartup"
 ct_exec "sed -i \"s/UI.initSetting('resize', 'off')/UI.initSetting('resize', 'scale')/\" /usr/share/novnc/app/ui.js"
 ok "VNC configured (auto-scaling enabled)."
 
-# ─── Fix Chromium for LXC (--no-sandbox) ─────────────────────────────────────
-info "Patching Chromium for LXC..."
+# ─── Configure Google Chrome as default browser ─────────────────────────────
+info "Configuring Google Chrome as default browser..."
 ct_exec "
-    sed -i 's|Exec=/usr/bin/chromium|Exec=/usr/bin/chromium --no-sandbox|g' /usr/share/applications/chromium.desktop
-
-    cat > /usr/local/bin/chromium-browser << 'WRAPPER'
-#!/bin/bash
-exec /usr/bin/chromium --no-sandbox \"\$@\"
-WRAPPER
-    chmod +x /usr/local/bin/chromium-browser
-
     mkdir -p /root/Desktop
-    cp /usr/share/applications/chromium.desktop /root/Desktop/
-    chmod +x /root/Desktop/chromium.desktop
-
-    # Set Chromium as default browser
-    update-alternatives --set x-www-browser /usr/bin/chromium 2>/dev/null || true
-    update-alternatives --set gnome-www-browser /usr/bin/chromium 2>/dev/null || true
-    xdg-settings set default-web-browser chromium.desktop 2>/dev/null || true
-
-    # XFCE preferred applications
-    mkdir -p /root/.config/xfce4
-    cat > /root/.config/xfce4/helpers.rc << 'HELPERS'
-WebBrowser=custom-WebBrowser
-HELPERS
-    mkdir -p /root/.local/share/xfce4/helpers
-    cat > /root/.local/share/xfce4/helpers/custom-WebBrowser.desktop << 'HELPER'
-[Desktop Entry]
-NoDisplay=true
-Version=1.0
-Encoding=UTF-8
-Type=X-XFCE-Helper
-X-XFCE-Binaries=chromium
-X-XFCE-Category=WebBrowser
-Name=Chromium
-X-XFCE-Commands=/usr/bin/chromium --no-sandbox;
-X-XFCE-CommandsWithParameter=/usr/bin/chromium --no-sandbox \"%s\";
-HELPER
+    cp /usr/share/applications/google-chrome.desktop /root/Desktop/
+    chmod +x /root/Desktop/google-chrome.desktop
+    update-alternatives --set x-www-browser /usr/bin/google-chrome-stable 2>/dev/null || true
+    update-alternatives --set gnome-www-browser /usr/bin/google-chrome-stable 2>/dev/null || true
+    xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
+    xdg-mime default google-chrome.desktop x-scheme-handler/https 2>/dev/null || true
+    xdg-mime default google-chrome.desktop text/html 2>/dev/null || true
 "
-ok "Chromium patched."
+ok "Google Chrome configured as default browser."
 
 # ─── Create desktop shortcuts ────────────────────────────────────────────────
 info "Creating desktop shortcuts..."
@@ -297,7 +282,7 @@ Version=1.0
 Type=Application
 Name=OpenClaw Setup Wizard
 Comment=Run the OpenClaw onboarding wizard to configure your AI assistant
-Exec=xfce4-terminal --title \"OpenClaw Onboarding\" --hold -e \"openclaw onboard\"
+Exec=qterminal --title 'OpenClaw Onboarding' -e sh -c 'openclaw onboard; exec bash'
 Icon=utilities-terminal
 Terminal=false
 Categories=Utility;
@@ -305,57 +290,20 @@ StartupNotify=true
 SHORTCUT
 chmod +x /root/Desktop/openclaw-onboard.desktop"
 
-# OpenClaw Dashboard (opens in Chromium with token)
+# OpenClaw Dashboard (opens in Chrome with token)
 ct_exec "cat > /root/Desktop/openclaw-dashboard.desktop << SHORTCUT
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=OpenClaw Dashboard
-Comment=Open the OpenClaw Control UI in Chromium
-Exec=/usr/bin/chromium --no-sandbox http://127.0.0.1:18789/#token=${AUTH_TOKEN}
+Comment=Open the OpenClaw Control UI in Google Chrome
+Exec=google-chrome-stable http://127.0.0.1:18789/#token=${AUTH_TOKEN}
 Icon=web-browser
 Terminal=false
 Categories=Network;WebBrowser;
 StartupNotify=true
 SHORTCUT
 chmod +x /root/Desktop/openclaw-dashboard.desktop"
-
-# Mark desktop shortcuts as trusted (runs once after XFCE/DBUS starts via VNC)
-ct_exec "cat > /usr/local/bin/trust-desktop-icons << 'SCRIPT'
-#!/bin/bash
-# Wait for XFCE DBUS session socket to appear
-for i in \$(seq 1 30); do
-    SOCK=\$(find /tmp -maxdepth 1 -name 'dbus-*' -type s 2>/dev/null | head -1)
-    [ -n \"\$SOCK\" ] && break
-    sleep 1
-done
-[ -z \"\$SOCK\" ] && exit 1
-export DBUS_SESSION_BUS_ADDRESS=unix:path=\$SOCK
-for f in /root/Desktop/*.desktop; do
-    gio set \"\$f\" metadata::xfce-exe-checksum \"\$(sha256sum \"\$f\" | cut -d' ' -f1)\" 2>/dev/null
-done
-# Self-disable after first successful run
-systemctl disable trust-desktop-icons.service 2>/dev/null
-SCRIPT
-chmod +x /usr/local/bin/trust-desktop-icons"
-
-ct_exec "cat > /etc/systemd/system/trust-desktop-icons.service << 'SVC'
-[Unit]
-Description=Mark desktop shortcuts as trusted for XFCE
-After=vncserver.service
-Requires=vncserver.service
-
-[Service]
-Type=oneshot
-ExecStartPre=/bin/sleep 5
-ExecStart=/usr/local/bin/trust-desktop-icons
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-SVC
-systemctl daemon-reload
-systemctl enable trust-desktop-icons.service"
 
 ok "Desktop shortcuts created."
 
@@ -452,6 +400,10 @@ echo
 echo -e "  ${BOLD}noVNC (remote desktop):${NC}"
 echo -e "    http://${CT_IP}:6080/vnc.html"
 echo -e "    VNC password: (same as container password)"
+echo
+echo -e "  ${BOLD}Browser Extension:${NC}"
+echo -e "    Open Chrome → chrome://extensions → Enable Developer Mode"
+echo -e "    Click 'Load unpacked' and select the OpenClaw extension directory"
 echo
 echo -e "  ${BOLD}SSH:${NC}"
 echo -e "    ssh root@${CT_IP}"

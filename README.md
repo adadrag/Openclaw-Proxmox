@@ -6,9 +6,9 @@ Deploy your own **[OpenClaw](https://openclaw.ai/) AI assistant** on any Proxmox
 
 - **Self-hosted AI assistant** — OpenClaw runs entirely on your hardware, under your control
 - **One command to deploy** — no manual package installation, no config file editing, no guesswork
-- **Full remote desktop** — access a graphical XFCE desktop from any browser via noVNC
-- **Ready-to-use browser** — Chromium pre-configured and set as default, works out of the box in LXC
-- **Lightweight container** — runs in an unprivileged LXC (not a full VM), so it's fast and resource-efficient
+- **Full remote desktop** — access a graphical LXQt desktop from any browser via noVNC
+- **Ready-to-use browser** — Google Chrome with developer mode for OpenClaw browser extension
+- **Lightweight container** — runs in a privileged LXC (not a full VM), so it's fast and resource-efficient
 - **Auto-starts on boot** — all services (gateway, VNC, noVNC) are systemd-managed
 - **Onboarding made easy** — desktop shortcut walks you through OpenClaw setup step by step
 - **Homebrew included** — install OpenClaw skills right away
@@ -59,7 +59,7 @@ Once you open the remote desktop via noVNC, you'll find two shortcuts ready to g
 | Shortcut | What it does |
 |----------|-------------|
 | **OpenClaw Setup Wizard** | Opens the interactive onboarding wizard (`openclaw onboard`) to configure your channels, workspace, and skills |
-| **OpenClaw Dashboard** | Opens Chromium with the dashboard URL and auth token pre-filled — no manual token entry needed |
+| **OpenClaw Dashboard** | Opens Chrome with the dashboard URL and auth token pre-filled — no manual token entry needed |
 
 ## Requirements
 
@@ -85,11 +85,11 @@ Everything else is auto-detected — VMID, storage, networking (DHCP).
 
 All inside the container (nothing is installed on the Proxmox host):
 
-- **Debian 13** LXC (unprivileged, nesting enabled)
+- **Debian 13** LXC (privileged)
 - **Node.js 22** + **OpenClaw**
 - **Homebrew** (for OpenClaw skills)
-- **XFCE4** desktop + **TigerVNC** + **noVNC**
-- **Chromium** (patched for LXC, set as default browser)
+- **LXQt** desktop + **TigerVNC** + **noVNC**
+- **Google Chrome** (with OpenClaw browser extension)
 - **Noto Color Emoji** font (for proper terminal rendering)
 - Three **systemd services**: `openclaw-gateway`, `vncserver`, `novnc`
 
@@ -121,16 +121,8 @@ pct exec <VMID> -- systemctl status vncserver
 pct exec <VMID> -- systemctl status novnc
 ```
 
-**Chromium won't launch?**
-The script patches this automatically. If you installed Chromium separately:
-```bash
-sed -i 's|Exec=/usr/bin/chromium|Exec=/usr/bin/chromium --no-sandbox|g' /usr/share/applications/chromium.desktop
-```
-
-**"Unable to contact settings server" in XFCE?**
-```bash
-apt-get install -y dbus-x11
-```
+**Chrome extension not loading?**
+Open Chrome, navigate to `chrome://extensions`, enable **Developer Mode** (top right toggle), then click **Load unpacked** and select the OpenClaw extension directory.
 
 ## License
 

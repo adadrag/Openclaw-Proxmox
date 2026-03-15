@@ -279,19 +279,30 @@ NOAUTO
 "
 ok "LXC-incompatible components disabled."
 
-# ─── Configure Google Chrome as default browser ─────────────────────────────
-info "Configuring Google Chrome as default browser..."
+# ─── Configure Google Chrome for root user ───────────────────────────────────
+info "Configuring Google Chrome..."
 ct_exec "
+    # Chrome requires --no-sandbox when running as root
+    sed -i 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-sandbox|g' /usr/share/applications/google-chrome.desktop
+
     mkdir -p /root/Desktop
     cp /usr/share/applications/google-chrome.desktop /root/Desktop/
     chmod +x /root/Desktop/google-chrome.desktop
+
+    # Wrapper so CLI calls also get --no-sandbox
+    cat > /usr/local/bin/google-chrome << 'WRAPPER'
+#!/bin/bash
+exec /usr/bin/google-chrome-stable --no-sandbox \"\$@\"
+WRAPPER
+    chmod +x /usr/local/bin/google-chrome
+
     update-alternatives --set x-www-browser /usr/bin/google-chrome-stable 2>/dev/null || true
     update-alternatives --set gnome-www-browser /usr/bin/google-chrome-stable 2>/dev/null || true
     xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
     xdg-mime default google-chrome.desktop x-scheme-handler/https 2>/dev/null || true
     xdg-mime default google-chrome.desktop text/html 2>/dev/null || true
 "
-ok "Google Chrome configured as default browser."
+ok "Google Chrome configured."
 
 # ─── Create desktop shortcuts ────────────────────────────────────────────────
 info "Creating desktop shortcuts..."
@@ -318,7 +329,7 @@ Version=1.0
 Type=Application
 Name=OpenClaw Dashboard
 Comment=Open the OpenClaw Control UI in Google Chrome
-Exec=google-chrome-stable http://127.0.0.1:18789/#token=${AUTH_TOKEN}
+Exec=google-chrome-stable --no-sandbox http://127.0.0.1:18789/#token=${AUTH_TOKEN}
 Icon=web-browser
 Terminal=false
 Categories=Network;WebBrowser;

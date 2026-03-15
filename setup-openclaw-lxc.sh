@@ -246,10 +246,38 @@ ct_exec "
     chmod 600 /root/.config/tigervnc/passwd
 "
 
+ct_exec "cat > /root/.Xresources << 'XRES'
+xterm*background: #1e1e2e
+xterm*foreground: #cdd6f4
+xterm*cursorColor: #f5e0dc
+xterm*color0: #45475a
+xterm*color1: #f38ba8
+xterm*color2: #a6e3a1
+xterm*color3: #f9e2af
+xterm*color4: #89b4fa
+xterm*color5: #f5c2e7
+xterm*color6: #94e2d5
+xterm*color7: #bac2de
+xterm*color8: #585b70
+xterm*color9: #f38ba8
+xterm*color10: #a6e3a1
+xterm*color11: #f9e2af
+xterm*color12: #89b4fa
+xterm*color13: #f5c2e7
+xterm*color14: #94e2d5
+xterm*color15: #a6adc8
+xterm*faceName: Monospace
+xterm*faceSize: 12
+xterm*saveLines: 10000
+xterm*scrollBar: false
+xterm*selectToClipboard: true
+XRES"
+
 ct_exec "cat > /root/.config/tigervnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
+xrdb -merge /root/.Xresources
 exec dbus-launch --exit-with-session startlxqt
 XSTARTUP
 chmod +x /root/.config/tigervnc/xstartup"

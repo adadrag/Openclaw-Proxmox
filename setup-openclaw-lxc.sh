@@ -208,7 +208,7 @@ info "Installing LXQt, TigerVNC, noVNC (this takes a few minutes)..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
     export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-    apt-get install -y lxqt openbox xterm tigervnc-standalone-server novnc websockify dbus-x11 fonts-noto-color-emoji 2>&1 \
+    apt-get install -y lxqt openbox lxterminal tigervnc-standalone-server novnc websockify dbus-x11 fonts-noto-color-emoji 2>&1 \
         | grep -v -E 'Failed to write|Failed to send reload|Permission denied|Cannot set LC_'
 "
 ok "Desktop environment installed."
@@ -246,41 +246,41 @@ ct_exec "
     chmod 600 /root/.config/tigervnc/passwd
 "
 
-ct_exec "cat > /root/.Xresources << 'XRES'
-xterm*background: #1e1e2e
-xterm*foreground: #cdd6f4
-xterm*cursorColor: #f5e0dc
-xterm*color0: #45475a
-xterm*color1: #f38ba8
-xterm*color2: #a6e3a1
-xterm*color3: #f9e2af
-xterm*color4: #89b4fa
-xterm*color5: #f5c2e7
-xterm*color6: #94e2d5
-xterm*color7: #bac2de
-xterm*color8: #585b70
-xterm*color9: #f38ba8
-xterm*color10: #a6e3a1
-xterm*color11: #f9e2af
-xterm*color12: #89b4fa
-xterm*color13: #f5c2e7
-xterm*color14: #94e2d5
-xterm*color15: #a6adc8
-xterm*faceName: Monospace
-xterm*faceSize: 12
-xterm*saveLines: 10000
-xterm*scrollBar: false
-xterm*selectToClipboard: true
-XRES"
-
 ct_exec "cat > /root/.config/tigervnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-xrdb -merge /root/.Xresources
 exec dbus-launch --exit-with-session startlxqt
 XSTARTUP
 chmod +x /root/.config/tigervnc/xstartup"
+
+# Configure lxterminal with dark theme
+ct_exec "
+    mkdir -p /root/.config/lxterminal
+    cat > /root/.config/lxterminal/lxterminal.conf << 'CONF'
+[general]
+fontname=Monospace 12
+bgcolor=#1e1e2e
+fgcolor=#cdd6f4
+palette_color_0=#45475a
+palette_color_1=#f38ba8
+palette_color_2=#a6e3a1
+palette_color_3=#f9e2af
+palette_color_4=#89b4fa
+palette_color_5=#f5c2e7
+palette_color_6=#94e2d5
+palette_color_7=#bac2de
+palette_color_8=#585b70
+palette_color_9=#f38ba8
+palette_color_10=#a6e3a1
+palette_color_11=#f9e2af
+palette_color_12=#89b4fa
+palette_color_13=#f5c2e7
+palette_color_14=#94e2d5
+palette_color_15=#a6adc8
+scrollback=10000
+CONF
+"
 
 # Set noVNC scaling to auto by default
 ct_exec "sed -i \"s/UI.initSetting('resize', 'off')/UI.initSetting('resize', 'scale')/\" /usr/share/novnc/app/ui.js"
@@ -333,7 +333,7 @@ WRAPPER
 ok "Google Chrome configured."
 
 # ─── Configure LXQt default terminal ─────────────────────────────────────────
-info "Setting xterm as default terminal..."
+info "Setting lxterminal as default terminal..."
 ct_exec "
     mkdir -p /root/.config/lxqt
     cat > /root/.config/lxqt/session.conf << 'CONF'
@@ -344,7 +344,7 @@ __userfile__=true
 TERM=xterm-256color
 
 [Preferred Applications]
-terminal_emulator=xterm -fa Monospace -fs 12
+terminal_emulator=lxterminal
 CONF
 "
 ok "Default terminal configured."
@@ -353,19 +353,19 @@ ok "Default terminal configured."
 info "Creating desktop shortcuts..."
 
 # Terminal shortcut
-ct_exec "cat > /root/Desktop/xterm.desktop << 'SHORTCUT'
+ct_exec "cat > /root/Desktop/terminal.desktop << 'SHORTCUT'
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=Terminal
 Comment=Open a terminal
-Exec=xterm -fa Monospace -fs 12
+Exec=lxterminal
 Icon=utilities-terminal
 Terminal=false
 Categories=System;TerminalEmulator;
 StartupNotify=true
 SHORTCUT
-chmod +x /root/Desktop/xterm.desktop"
+chmod +x /root/Desktop/terminal.desktop"
 
 # OpenClaw Onboarding wizard (runs in terminal)
 ct_exec "cat > /root/Desktop/openclaw-onboard.desktop << 'SHORTCUT'
@@ -374,7 +374,7 @@ Version=1.0
 Type=Application
 Name=OpenClaw Setup Wizard
 Comment=Run the OpenClaw onboarding wizard to configure your AI assistant
-Exec=xterm -title 'OpenClaw Onboarding' -fa 'Monospace' -fs 12 -e sh -c 'openclaw onboard; exec bash'
+Exec=lxterminal --title='OpenClaw Onboarding' -e sh -c 'openclaw onboard; exec bash'
 Icon=utilities-terminal
 Terminal=false
 Categories=Utility;

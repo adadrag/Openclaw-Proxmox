@@ -258,6 +258,27 @@ chmod +x /root/.config/tigervnc/xstartup"
 ct_exec "sed -i \"s/UI.initSetting('resize', 'off')/UI.initSetting('resize', 'scale')/\" /usr/share/novnc/app/ui.js"
 ok "VNC configured (auto-scaling enabled)."
 
+# ─── Disable LXC-incompatible LXQt components ───────────────────────────────
+info "Disabling LXC-incompatible LXQt components..."
+ct_exec "
+    mkdir -p /root/.config/autostart
+    # Disable power management (no hardware in LXC)
+    cat > /root/.config/autostart/lxqt-powermanagement.desktop << 'NOAUTO'
+[Desktop Entry]
+Type=Application
+Name=LXQt Power Management
+Hidden=true
+NOAUTO
+    # Disable screen saver (not needed in VNC)
+    cat > /root/.config/autostart/lxqt-xscreensaver-autostart.desktop << 'NOAUTO'
+[Desktop Entry]
+Type=Application
+Name=LXQt Screen Saver
+Hidden=true
+NOAUTO
+"
+ok "LXC-incompatible components disabled."
+
 # ─── Configure Google Chrome as default browser ─────────────────────────────
 info "Configuring Google Chrome as default browser..."
 ct_exec "

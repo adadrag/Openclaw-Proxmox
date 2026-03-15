@@ -195,7 +195,7 @@ ct_exec "
     su - brewuser -c 'NONINTERACTIVE=1 /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"' 2>&1 | tail -5
 
     # Make brew available system-wide for root
-    echo 'eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"' >> /root/.bashrc
+    echo '[ -x /home/linuxbrew/.linuxbrew/bin/brew ] && eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"' >> /root/.bashrc
     ln -sf /home/linuxbrew/.linuxbrew/bin/brew /usr/local/bin/brew
 "
 ok "Homebrew installed."
@@ -208,7 +208,7 @@ info "Installing LXQt, TigerVNC, noVNC (this takes a few minutes)..."
 ct_exec "
     export DEBIAN_FRONTEND=noninteractive
     export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-    apt-get install -y lxqt openbox qterminal tigervnc-standalone-server novnc websockify dbus-x11 fonts-noto-color-emoji 2>&1 \
+    apt-get install -y lxqt openbox xterm tigervnc-standalone-server novnc websockify dbus-x11 fonts-noto-color-emoji 2>&1 \
         | grep -v -E 'Failed to write|Failed to send reload|Permission denied|Cannot set LC_'
 "
 ok "Desktop environment installed."
@@ -314,7 +314,7 @@ Version=1.0
 Type=Application
 Name=OpenClaw Setup Wizard
 Comment=Run the OpenClaw onboarding wizard to configure your AI assistant
-Exec=qterminal --title 'OpenClaw Onboarding' -e sh -c 'openclaw onboard; exec bash'
+Exec=xterm -title 'OpenClaw Onboarding' -fa 'Monospace' -fs 12 -e sh -c 'openclaw onboard; exec bash'
 Icon=utilities-terminal
 Terminal=false
 Categories=Utility;

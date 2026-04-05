@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language
+
+All communication, responses, code comments, commit messages, and documentation **must be in English only**, regardless of what language the user writes in.
+
 ## Project Overview
 
 OpenClaw on Proxmox is a single-script deployment tool (`setup-openclaw-lxc.sh`) that automates creating a Proxmox LXC container with a fully configured OpenClaw AI assistant, LXQt desktop, Google Chrome, and VNC/noVNC remote access. It targets Proxmox VE 8.x+ hosts running as root.
@@ -42,6 +46,10 @@ bash setup-openclaw-lxc.sh
 ```
 
 Verify by checking: container creation, all three systemd services running, noVNC web access, and OpenClaw dashboard reachability.
+
+## Changelog
+
+All notable changes are documented in [`docs/changelog.md`](docs/changelog.md). Update it with every meaningful change to the script (date, short description, what changed and why).
 
 ## Shell Style
 
